@@ -1,4 +1,4 @@
-// 10727246 ¼B®Ê¦¨ 10727255 ©P¤lÄË
+// 10727246 åŠ‰æ™‰æˆ 10727255 å‘¨å­é¨°
 #include <iostream>
 #include <new> 
 #include <string>
@@ -13,6 +13,8 @@
 #include <stack>
 #include <math.h>
 #include <algorithm>
+#include <queue>
+
 
 using namespace std;
 #define MAX_LEN 10              // array size of student id and name
@@ -38,12 +40,14 @@ class DirectedGraph
 	    {  string   sid1;            // sender
 	       adjListNode *head;        // pointer to the first node of a list
 	       int        inf;           // infiuence value
+	       vector<string>  visited;   //  ç¶“éçš„å­¸è™Ÿ 
 	    }  adjList;
 	    
 	    vector<adjList> adjL;        // the adjacency lists
 	    string      fileNo;          // a number to form a file name
 	    float       wgtLB;           // lower bound of weights
 	    int         stNo;            // file size
+	    vector<string>  stnum ;
 	    
 	    bool readF(vector<studentPair> & student) {                  // get all records from a file
             fstream      binFile;                    // input file handle
@@ -77,16 +81,39 @@ class DirectedGraph
 	    	
 		}
 	    
-	    int locate(vector<adjList> & adjL, string & key);            // locate the index in adjacency lists
+	    int locate(vector<adjList> adjL, string key)            // locate the index in adjacency lists
+	    {   int num = 0,i = 0;
+		    while( i < adjL.size() ) {
+	    	    if( adjL[i].sid1.compare( key ) == 0 ) {
+	    	    	num = i ;
+	    	    	break;
+				}
+				
+				i++;   
+		    }
+		    
+		    return num;
+		}
 	    int locate(string & key) { return locate(adjL, key); }  // locate the index in adjacency lists
 	    bool addCount(adjListNode * a, adjListNode * b);            // count only if not visited yet
 	    void saveINF(vector<adjList> & a, string b);                // wirte infiuence values as a file
+	    bool haveSameIndex( vector<string> array, string key ) 
+		{   for ( int i = 0 ; i < array.size() ; i++ ) {
+			    if ( array[i].compare( key) == 0) 
+			    	return true;
+				
+		    } 
+		    
+		    return false;
+		}
+		
+		
 	
 	    
     public:
     	
         
-    	void setfile( string filename )         // ³]©wÀÉ®×¦W 
+    	void setfile( string filename )         // è¨­å®šæª”æ¡ˆå 
 	    {    fileNo = filename;
 		}
         DirectedGraph(): fileNo(""), wgtLB(0) {}               // default constructor
@@ -103,7 +130,7 @@ class DirectedGraph
 	        if( !readF( student ) )
 	            return false;
 	        
-	        for( int i = 0 ; i < stNo ; i++ ) {          //  ´M§ä©ñªº¦ì¸m        
+	        for( int i = 0 ; i < stNo ; i++ ) {          //  å°‹æ‰¾æ”¾çš„ä½ç½®        
 		        adjNo = new adjListNode() ;
 	            adjNo->sid2 = student[i].sid2;
 	            adjNo->next = NULL;
@@ -118,7 +145,7 @@ class DirectedGraph
 	    		        if( adjL[j].sid1 == aj.sid1  ) {
 	    			        adjListNode *temp = adjL[j].head;
 	    		            for( adjListNode *walk = temp->next ; temp != NULL ; temp = temp->next, walk=walk->next ) {      
-	    		    	        if( walk == NULL ) {       
+	    		    	        if( walk == NULL ) {      //  åªæœ‰ä¸€å€‹   
 	    		    		        if( temp->sid2 < adjNo->sid2 ) {
 	    		    			        temp->next = adjNo;
 							        }
@@ -130,7 +157,7 @@ class DirectedGraph
 							
 							        break;
 						        }
-						        else if( walk->next == NULL ) {
+						        else if( walk->next == NULL ) {      // 2å€‹ 
 						            if( temp->sid2 > adjNo->sid2 ) {
 	    		    			        adjNo->next = temp;
 								        temp = adjNo;
@@ -146,7 +173,7 @@ class DirectedGraph
 							
 							        break;
 						        }
-						        else {
+						        else {           // å¤šå€‹ 
 							        if ( walk->sid2 > adjNo->sid2 ) {
 								        adjNo->next = walk;
 								        temp->next = adjNo;
@@ -159,7 +186,7 @@ class DirectedGraph
 				        }  /// end if
 			        }  // end  for
 			
-			        if( j == adjL.size() )      // ¨S¦³§ä¨ì¬Û¦Pªº sender
+			        if( j == adjL.size() )      // æ²’æœ‰æ‰¾åˆ°ç›¸åŒçš„ sender
 			            insert( aj ) ;
 			    
 			    
@@ -168,7 +195,7 @@ class DirectedGraph
 		        }
             }  //  end for
     
-            for( int i = 0 ; i < adjL.size() ; i++ ) {        // ³£¨S¦³·í¹Lsender  
+            for( int i = 0 ; i < adjL.size() ; i++ ) {        // éƒ½æ²’æœ‰ç•¶ésender  
     	        for( adjListNode *temp = adjL[i].head ; temp != NULL ; temp=temp->next ) {
     		        for( j = 0; j < adjL.size() ; j++ ) {
     			        if( temp->sid2 == adjL[j].sid1 ) 
@@ -176,7 +203,7 @@ class DirectedGraph
     			
 		            }
 		    
-		            if ( j == adjL.size() ) {    // ¨S·í¹Lsender 
+		            if ( j == adjL.size() ) {    // æ²’ç•¶ésender 
 		                adjList  oneL ;
 				        oneL.sid1 = temp->sid2 ;
 				        oneL.head = NULL;
@@ -185,17 +212,17 @@ class DirectedGraph
 		        }
 	        }
     
-            sort( adjL.begin(), adjL.end(), SortObj ) ;  // ±Æ§Ç 
+            sort( adjL.begin(), adjL.end(), SortObj ) ;  // æ’åº 
     
 	        return true;
 
         }
 	    
-	    struct Sort {
-	        bool operator() ( adjList a, adjList b ) {
-		        return( a.sid1 < b.sid1 ) ;
-	        }
-        } SortObj;	
+	    
+	    
+        
+        
+        
         
 		void saveF()                                           // write adjacent lists as a file
 		{   int num = 0, j = 1;
@@ -229,9 +256,92 @@ class DirectedGraph
 	        cout << "<<< There are " << num << " nodes in total. >>>" << endl << endl;
 			
 		}
-	    void compINF(string);                                  // compute influence values by BFS
-	    void compInf();                                        // compute influence values by DFS
-	    void clearUp( ) {                      // ²M°£¸ê®Æ 
+		
+		void saveF2()                                           // write adjacent lists as a file
+		{   int num = 0, j = 1;
+	        string filename;
+	        filename = "pairs" + fileNo + ".cnt";
+	        fstream file;
+	        file.open(filename.c_str(), ios::out );
+	        if ( file.is_open() ) {
+	            file << "<<< There are " << adjL.size() << " IDs in total. >>>" << endl;
+                for ( int i = 0 ; i < adjL.size(); i++ ) {
+      	            file << "[" << i+1 << "]" << adjL[i].sid1 << "(" << adjL[i].inf << ")"<< ":" << endl ;
+		            for(  j = 1 ; j <= adjL[i].visited.size() ; j++ ) {
+		  	            file << "\t(" << j << ")\t" << adjL[i].visited[j-1] ;
+		            
+		                if ( j%10 == 0) 
+		  	                file << endl;
+		                
+                    }
+                    
+                    file << endl;
+                }
+            }
+    
+
+	        file.close() ;
+	        
+	        cout << "<<< There are " << adjL.size() << " IDs in total. >>>" << endl << endl;
+	        
+			
+		}
+		
+	    void compINF()                                   // compute influence values by BFS 
+	    {    queue<string> que;
+	         int index;
+		     
+	         for( int i = 0 ; i < adjL.size() ; i++ ) {
+	         	que.push( adjL[i].sid1 ) ;
+	         	
+	         	while( !que.empty() ) {               
+	         		index = locate( que.front() ) ;    //  æ‰¾å‡ºæ‰€åœ¨çš„åœ°æ–¹ 
+	         	    for( adjListNode *temp = adjL[index].head ; temp != NULL ; temp = temp->next ) {
+	         	        if( !haveSameIndex( adjL[i].visited, temp->sid2 ) && adjL[i].sid1.compare( temp->sid2 ) != 0 ) {
+	         	            adjL[i].visited.push_back( temp->sid2 );
+							que.push( temp->sid2 ) ; 
+						}	
+						
+						
+	         	    	
+					}
+					que.pop();   
+					
+			    }
+			    
+			   
+       	        sort( adjL[i].visited.begin(), adjL[i].visited.end(), SortVisit ) ;         
+       	        
+			    adjL[i].inf = adjL[i].visited.size() ;  
+	         }
+	         
+	         sort( adjL.begin(), adjL.end(), Sortinf ) ;       // æ’åºinfå¤§å° 
+	        
+		}
+		
+		struct SortObj {
+	        bool operator() ( adjList a, adjList b ) {
+		        return( a.sid1 < b.sid1 ) ;
+	        }
+        } SortObj;	
+        
+	    struct Sortinf {
+	        bool operator() ( adjList a, adjList b ) {
+	        	if( a.inf > b.inf ) 
+				    return true ;
+				else if( a.inf == b.inf && a.sid1 < b.sid1 )    
+				    return true;
+				else return false;    
+	        }
+        } Sortinf;	
+        
+        struct SortVisit {
+	        bool operator() ( string a,  string b ) {
+		        return( a < b ) ;
+	        }
+        } SortVisit;	
+	    
+	    void clearUp( ) {                      // æ¸…é™¤è³‡æ–™ 
 	    	adjL.clear();
 		}
 	    
@@ -280,7 +390,8 @@ int  main()
                 one = false;
 			}
 			
-			if ( compare->create() ) {
+			if ( !compare->existed() ) {
+				compare->create();
 			    compare->saveF();
 				one = true;
 		    }
@@ -298,7 +409,14 @@ int  main()
 		
 		}
 		else if ( command == 2 ) {
-			
+			if ( compare->existed() ) {
+				compare->compINF();
+			    compare->saveF2();
+			}
+			else {
+				cout << "### There is no graph and choose 1 first. ###" << endl;
+				
+		    }
 			
 		    
 			
